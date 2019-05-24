@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  server:
+    image: node:10-alpine
+    environment:
+      - NODE_ENV=development
+    ports:
+      - '5000:5000'
+    volumes:
+      - .:/home/server
+    working_dir: /home/server
+    command: sh -c 'npm run tsc && node dist/server.js'
+  database:
+    image: postgres:11.2-alpine
+    environment:
+      - POSTGRES_USER=example_user
+      - POSTGRES_PASSWORD=example_password
+      - POSTGRES_DB=example_db
+    volumes:
+      - ./example-data.sql:/tmp/example-data.sql
+  
