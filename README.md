@@ -1,5 +1,5 @@
 # TypeScript + Sequelize v5 Example Project
-This project aims to demonstrate basic usage of [Sequelize](http://docs.sequelizejs.com/) in conjunction with TypeScript and Node.js. There are many examples out there, but view deal with version 5 of Sequelize, which comes with its own typing. If you find any issues or ways to improve it, let me know!
+This project aims to demonstrate basic usage of [Sequelize](http://docs.sequelizejs.com/) in conjunction with TypeScript and Node.js. There are many examples out there, but few deal with version 5 of Sequelize, which comes with its own typing. If you find any issues or ways to improve it, let me know!
 
 ## Format
 The example consists of a simple database layout with three entity types: students, teachers, and classes.
