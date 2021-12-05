@@ -3,7 +3,6 @@
 #include "operations.h"
 #include "serpent.h"
 
-
 #define FRAC_PHI	0x9e3779b9UL
 
 #define key_transform(n, sk, rk, i, j) \
