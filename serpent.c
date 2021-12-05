@@ -3,32 +3,31 @@
 
 #include "operations.h"
 
+#define FRAC_PHI	0x9e3779b9UL
 
 #define key_transform(n, pk, kw, off) \
-	s##n(pk[off+3], pk[off+2], pk[off+1], pk[off], \
+	s##n(pk[off+11], pk[off+10], pk[off+9], pk[off+8], \
 	     kw[off+3], kw[off+2], kw[off+1], kw[off])
 
-#define FRAC_PHI	0x9e3779b9UL
-void gen_keys(uint32_t key[8], uint32_t rk[33][4]) {
-	uint32_t w[140] = { 0 };
-	for (uint32_t i = 0; i < 8; ++i)
-		w[i] = key[i];
+void gen_keys(uint32_t user_key[8], uint32_t rk[33][4]) {
+	uint32_t w[140];
 
+	for (size_t i = 0; i < 8; ++i)
+		w[i] = user_key[i];
 	for (uint32_t i = 8; i < 140; ++i)
 		w[i] = rol(w[i-8] ^ w[i-5] ^ w[i-3] ^ w[i-1] ^ FRAC_PHI ^ (i - 8), 11);
 
-	uint32_t *pk = &w[8];
 	uint32_t kw[132] = { 0 };
-	key_transform(3, pk, kw, 0);
+	key_transform(3, w, kw, 0);
 	for (size_t i = 0; i < 128; i += 32) {
-		key_transform(2, pk, kw, i+4);
-		key_transform(1, pk, kw, i+8);
-		key_transform(0, pk, kw, i+12);
-		key_transform(7, pk, kw, i+16);
-		key_transform(6, pk, kw, i+20);
-		key_transform(5, pk, kw, i+24);
-		key_transform(4, pk, kw, i+28);
-		key_transform(3, pk, kw, i+32);
+		key_transform(2, w, kw, i+4);
+		key_transform(1, w, kw, i+8);
+		key_transform(0, w, kw, i+12);
+		key_transform(7, w, kw, i+16);
+		key_transform(6, w, kw, i+20);
+		key_transform(5, w, kw, i+24);
+		key_transform(4, w, kw, i+28);
+		key_transform(3, w, kw, i+32);
 	}
 
 	for (int i = 0; i < 33; ++i)
@@ -36,34 +35,7 @@ void gen_keys(uint32_t key[8], uint32_t rk[33][4]) {
 			rk[i][j] = kw[4*i+j];
 }
 
-#define linear_transform(a,b,c,d, w,x,y,z) { \
-	a = rol(a, 13); \
-	c = rol(c, 3); \
-	b ^= a ^ c; \
-	d ^= c ^ (a << 3); \
-	b = rol(b, 1); \
-	d = rol(d, 7); \
-	a ^= b ^ d; \
-	c ^= d ^ (b << 7); \
-	a = rol(a, 5); \
-	c = rol(c, 22); \
-	w = a; x = b; y = c; z = d; }
 
-#define inverse_linear_transform(a,b,c,d, w,x,y,z) { \
-	c = ror(c, 22); \
-	a = ror(a, 5); \
-	c ^= d ^ (b << 7); \
-	a ^= b ^ d; \
-	d = ror(d, 7); \
-	b = ror(b, 1); \
-	d ^= c ^ (a << 3); \
-	b ^= a ^ c; \
-	c = ror(c, 3); \
-	a = ror(a, 13); \
-	w = a; x = b; y = c; z = d; }
-
-#define mix_key(a,b,c,d, sk) \
-	a ^= sk[0]; b ^= sk[1]; c ^= sk[2]; d ^= sk[3];
 
 
 #define single_round(n, a,b,c,d, w,x,y,z, rk) \

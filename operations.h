@@ -11,6 +11,34 @@ https://www.ii.uib.no/~osvik/pub/aes3.pdf
 #define rol(w, n) (((uint32_t)(w)) << (n)) | (((uint32_t)(w)) >> (32 - (n)))
 #define ror(w, n) (((uint32_t)(w)) >> (n)) | (((uint32_t)(w)) << (32 - (n)))
 
+#define linear_transform(a,b,c,d, w,x,y,z) { \
+	a = rol(a, 13); \
+	c = rol(c, 3); \
+	b ^= a ^ c; \
+	d ^= c ^ (a << 3); \
+	b = rol(b, 1); \
+	d = rol(d, 7); \
+	a ^= b ^ d; \
+	c ^= d ^ (b << 7); \
+	a = rol(a, 5); \
+	c = rol(c, 22); \
+	w = a; x = b; y = c; z = d; }
+
+#define inverse_linear_transform(a,b,c,d, w,x,y,z) { \
+	c = ror(c, 22); \
+	a = ror(a, 5); \
+	c ^= d ^ (b << 7); \
+	a ^= b ^ d; \
+	d = ror(d, 7); \
+	b = ror(b, 1); \
+	d ^= c ^ (a << 3); \
+	b ^= a ^ c; \
+	c = ror(c, 3); \
+	a = ror(a, 13); \
+	w = a; x = b; y = c; z = d; }
+
+#define mix_key(a,b,c,d, sk) \
+	a ^= sk[0]; b ^= sk[1]; c ^= sk[2]; d ^= sk[3];
 
 // MSB..LSB
 #define s0(a,b,c,d, w,x,y,z) { \
