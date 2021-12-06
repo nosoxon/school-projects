@@ -1,3 +1,15 @@
+/* 20211205 Oliver Emery (University of Iowa) CS:4980
+ *
+ * This file contains the mid-level cryptographic routines for Serpent:
+ *   - key schedule generation
+ *   - single block encrypt
+ *   - single block decrypt
+ * 
+ * I used several preprocessor macros to avoid too much repetition and to increase
+ * efficiency via inlined "functions." There's not a whole lot to see here, most of
+ * the interesting stuff is in `main.c' or `operations.h'
+ */
+
 #include <sys/types.h>
 
 #include "operations.h"
@@ -81,7 +93,6 @@ void encrypt_block(uint32_t in[4], uint32_t out[4], subkey_t sk) {
 	inverse_linear_transform(w,x,y,z, a,b,c,d); \
 	is##n(d,c,b,a, z,y,x,w); \
 	mix_key(w,x,y,z, sk);
-
 
 void decrypt_block(uint32_t in[4], uint32_t out[4], subkey_t sk) {
 	register uint32_t w, x, y, z,
