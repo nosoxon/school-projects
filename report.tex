@@ -1,0 +1,156 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+
+\usepackage{accsupp}
+\usepackage{amsmath}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings,avrlang}
+\usepackage{siunitx}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+% we dont fw ugly
+\setmainfont{Palatino ET W02 Roman}[
+	BoldFont=Palatino ET W02 Bold,
+	ItalicFont=Palatino ET W02 Italic,
+	BoldItalicFont=PalatinoETW02-BoldItali,
+	Scale=0.8]
+\setmonofont{Courier Prime}[Scale=0.9]
+
+% keep page and line numbers from being selected just in awful case
+\renewcommand{\thelstnumber}{\protect\BeginAccSupp{ActualText={}}%
+	\arabic{lstnumber}%
+\protect\EndAccSupp{}}
+
+\renewcommand{\thepage}{\protect\BeginAccSupp{ActualText={}}%
+	\arabic{page}%
+\protect\EndAccSupp{}}
+
+% for our beautiful schematic
+\usetikzlibrary{
+	arrows,
+	backgrounds,
+	calc,
+	fit,
+	matrix,
+	patterns,
+	plotmarks,
+	shadows,
+	shapes,
+	snakes
+}
+
+\definecolor{Green}{HTML}{006600}
+\definecolor{Blue}{HTML}{2d2f92}
+\definecolor{Purple}{HTML}{99479b}
+\definecolor{Orange}{HTML}{f58137}
+\definecolor{Red}{HTML}{ed1b23}
+\lstset{
+	language=AVR,
+	basicstyle=\small\ttfamily,
+	keywordstyle=\color{Blue}\bfseries,
+	keywordstyle=[2]\color{Orange},
+	keywordstyle=[3]\color{Purple},
+	keywordstyle=[4]\color{Red},
+	commentstyle=\small\itshape\color{Green},
+	tabsize=8,
+	numbers=left,
+	numberstyle=\small\ttfamily\color{Blue}
+}
+
+\title{ECE:3360 -- Lab 2 Report}
+\author{Oliver Emery}
+\date{23 February 2022}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+The goal of this lab was to construct a simple stopwatch using shift registers,
+7-segment displays, and two buttons.
+\par The stopwatch must implement two modes with different timer resolutions.
+In Mode I, the stopwatch should begin with ``0.0'' displayed. When the first
+button is pressed, the display should increment every 0.1 seconds, updating the
+display to ``0.1'', ``0.2'', and so on until the display reaches ``9.9''.
+Pushing the first button while the stopwatch is counting up should stop the
+counter and freeze the display. Pressing the first button while paused should
+continue the timer. Once 9.9 seconds have elapsed in Mode I, the display should
+flash ``9.9'' once every two seconds. Pressing the second button for less than a
+second in any state should stop the counter and reset the stopwatch to 0.
+\par In Mode II the stopwatch should function identically to Mode I. However,
+the timer should increment in steps of 1 second instead of 0.1 seconds.
+Similarly, the stopwatch should now show ``00'' at the start and ``99'' for
+overflows.
+\par Pressing the second button for more than 1 second should reset the
+stopwatch to 0 and alternate between modes I and II.
+
+\section{Schematic}
+\begin{figure}[H]
+	\centering
+	\input{schematic.tikz}
+	\caption{schematic as implemented}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{images/implementation.jpg}
+	\caption{physical implementation}
+\end{figure}
+
+\section{Discussion}
+I used \SI{1}{\kilo\ohm} resistors for the seven-segment display
+in order to keep the current through each segment well beneath the target value
+of \SI{6}{mA}. I also included a standard \SI{0.1}{\micro\farad} decoupling
+capacitor to smooth ripples in the power supply.
+
+\subsection{Hardware Design}
+The final design was almost identical to that prescribed in the lab manual, with
+the exception of the four-digit display. Fortunately, the pinout of the 3461AS
+was nearly identical to that of the 5161AS, and only required one additional
+wire for each digit.
+
+\subsection{Buttons and Debouncing}
+Each button has an associated structure in SRAM containing relevant information.
+I aimed to keep the debouncing logic as simple as possible: register a change
+in button state if and only if it maintains that changed state over a minimum
+period of time. An unregistered change occurs when the button state in memory
+differs from the button's hardware state. The final implementation requires
+50 stable samples at \SI{1}{ms} intervals to register a change.
+\par Also included in the button structure is a duration field, incremented
+every \SI{100}{ms} when a button is in the pressed state. This value is used
+when button B is released to determine whether or not to change the mode.
+
+\subsection{Four-digit Seven-segment Display}
+\par In pursuit of extra credit, I created the design with a four-digit
+seven-sigment display. The 3461AS can only display one unique digit at a time,
+with power controlled by one pin for each digit. One study\footnotemark[1]
+found that humans can detect flicker at an extreme of \SI{500}{Hz}. With a
+system clock of \SI{16}{MHz}, a refresh rate as large as \SI{1}{KHz} still
+affords an entire 16,000 cycles to spend per refresh. For each refresh, the
+stopwatch must display each digit for a distinct but equal period of time.
+\par The shift register supports clock speeds up to \SI{20}{MHz}; the final
+implementation requires approximately \SI{8}{\micro\second} (lines 574-634) to
+shift one byte into the shift register. No display digit is powered while the shift
+register is loaded. In order to maximize the duty cycle of each digit, it is
+ideal for each digit to be powered substantially longer than it is not during
+its 25\% of each refresh. Lines 635-648 below produce a delay of approximately
+\SI{48}{\micro\second}, resulting in a final duty cycle of \[
+	25\% \cdot \frac{48}{8+48}\approx 21.4\%
+\] for each digit. Unsurprisingly, reducing the duty cycle dims the digits.
+Each refresh in the final implementation takes approximately
+\SI{230}{\micro\second} (lines 576-611), which corresponds to a refresh rate of
+\SI{4.35}{kHz}. Indeed, no flicker is detectable with the naked eye.
+\par To control power to the display digits, one I/O pin is assigned to each of
+the four digits. While this method is simple and convenient, it would also be
+feasible to use another shift register in lieu of I/O pins to control power to
+each digit. While this would increase I/O pin availability, it would increase
+hardware cost and increase code complexity {\footnotesize marginally}.
+\footnotetext[1]{https://www.nature.com/articles/srep07861}
+\par See source comments in Appendix A for more local and detailed discussion.
+
+\newpage\appendix
+\section{Source Code Listing}
+\lstinputlisting{main.S}
+
+\end{document}
