@@ -1,22 +1,22 @@
 /* 20211205 Oliver Emery (University of Iowa) CS:4980
- * 
+ *
  * Cryptographic frontend/CLI for my Serpent implementation. I used GNU argp to
  * help with argument parsing.
- * 
+ *
  * Compile on any recent Linux distro with
  *  $ gcc -o serpent main.c serpent.c
- * 
+ *
  * Run
  *  $ ./serpent --help
  * to see available options.
- * 
+ *
  * Example:
  *  $ dd if=/dev/random of=keyfile bs=32 count=1
  *  $ dd if=/dev/random of=input bs=512 count=4
  *  $ ./serpent --encrypt=CBC --keyfile=keyfile < input > input.enc
  *  $ ./serpent --decrypt=CBC --keyfile=keyfile < input.enc > input.dec
  *  $ cmp input input.dec
- * 
+ *
  * This demo supports two modes: CBC and ECB. I cheaped out on the IV and made it
  * constant 0s. As this is a frontend for a raw block cipher, it only processes
  * 128-bit blocks. I have it set to pad the last block with 0s if it isn't aligned
@@ -70,7 +70,7 @@ static char parse_mode(char *modestr) {
 		return MODE_ECB;
 	if (!strcasecmp(modestr, "cbc"))
 		return MODE_CBC;
-	
+
 	fprintf(stderr, "Warning: Mode `%s' unrecognized. Defaulting to CBC.\n", modestr);
 	return MODE_CBC;
 }
@@ -105,7 +105,7 @@ static error_t parse_option(int key, char *arg, struct argp_state *state) {
 /* Load key from command line argument: hex literal or keyfile */
 void process_key(char key_type, char *key_data, uint32_t full_key[8]) {
 	switch (key_type) {
-	case KEY_TYPE_HEX:		
+	case KEY_TYPE_HEX:
 		size_t len = strlen(key_data);
 		if (len % 8 || len == 0)
 			error(1, 0, "KEY must have a positive multiple of 8 hex digits");
@@ -127,10 +127,10 @@ void process_key(char key_type, char *key_data, uint32_t full_key[8]) {
 
 		if (kf_stat.st_size < 32)
 			error(1, 0, "Keyfile must contain at least 32 bytes of data");
-		
+
 		if (read(fd, full_key, 32) < 32)
 			error(1, errno, "Unable to read `%s'", key_data);
-		
+
 		close(fd);
 		break;
 	}
@@ -147,13 +147,16 @@ void process_input(char operation, char mode, uint32_t user_key[8]) {
 	ssize_t nr;
 	uint32_t input[4], output[4] = { 0 }, chain[4] = { 0 };
 
-	// Read 16 bytes from STDIN at a time. Could increase speed better buffering
+	// Read 16 bytes from STDIN at a time. Could increase speed with better buffering
 	while ((nr = read(STDIN_FILENO, input, 16)) > 0) {
 		// poor man's padding
-		if (nr < 16) memset(((char*)input) + nr, 0, 16 - nr);
+		if (nr < 16)
+			memset(((char*) input) + nr, 0, 16 - nr);
 
 		if (operation == OP_ENCRYPT) {
-			if (mode == MODE_CBC) { xor_blocks(input, output) }
+			if (mode == MODE_CBC)
+				xor_blocks(input, output)
+
 			encrypt_block(input, output, subkeys);
 		} else {
 			decrypt_block(input, output, subkeys);

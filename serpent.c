@@ -4,7 +4,7 @@
  *   - key schedule generation
  *   - single block encrypt
  *   - single block decrypt
- * 
+ *
  * I used several preprocessor macros to avoid too much repetition and to increase
  * efficiency via inlined "functions." There's not a whole lot to see here, most of
  * the interesting stuff is in `main.c' or `operations.h'

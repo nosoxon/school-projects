@@ -39,25 +39,25 @@
 
 /* Below are optimized functions for S-box calculations. I found these published
  * at https://www.ii.uib.no/~osvik/pub/aes3.pdf
- * 
+ *
  * Serpent was designed for bitslice operation. The initial and final permutations
  * serve only to reformat input blocks when operations are performed traditionally.
  *
  * In normal use, the Serpent S-boxes are 16-element arrays, for example:
- * 
+ *
  *   S0: [3 8 15 1 10 6 5 11 14 13 4 2 7 0 9 12]
- * 
+ *
  * For an input value of 3, the result is S0[3] = 1 and so forth. However, using
  * the S-boxes in this form is extraordinarly inefficient for modern computers.
  * Arrays lookups require memory access, and only 4 bits of a 128-bit block can
  * be processed at a time.
- * 
+ *
  * With bitslices, the S-boxes become combinational logic circuits, with the
  * possibility of optimization. Each 32-bit input word of a block is treated
  * as an array of bits, allowing all operations for a block to be performed in
  * parallel. I first attempted to optimize each output bit individually as I've
  * learned to do in Digital Design:
- * 
+ *
  *      	abcd	w x y z
  *      0	0000	0 0 1 1
  *      1	0001	1 0 0 0
@@ -75,16 +75,16 @@
  *      13	1101	0 0 0 0
  *      14	1110	1 0 0 1
  *      15	1111	1 1 0 0
- * 
+ *
  * I soon realized that the outputs bits must be optimized together to reach
  * an efficient solution. The paper linked above gives a general overview of
  * the process of finding these optimizations for Serpent S-boxes.
- * 
+ *
  * Essentially, Osvik created an algorithm that brute forces combinations of
  * machine instructions, with some heuristics to avoid useless combinations.
  * His algorithm aimed to exploit instruction-level parallelism to reduce
  * CPU cycles for each S-box dramatically.
- * 
+ *
  * I created a rough prototype algorithm to perform approximately the same,
  * but it still needs quite a bit of work and takes hours to produce even
  * remotely useful results.                                                  */
