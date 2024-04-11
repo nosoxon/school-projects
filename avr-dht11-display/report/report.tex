@@ -1,0 +1,156 @@
+\documentclass[12pt,letterpaper]{article}
+\usepackage[letterpaper,margin=1in]{geometry}
+
+\usepackage{accsupp}
+\usepackage{amsmath}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings,avrlang}
+\usepackage{siunitx}
+\usepackage{tikz}
+\usepackage{xcolor}
+
+% we dont fw ugly
+\setmainfont{Palatino ET W02 Roman}[
+	BoldFont=Palatino ET W02 Bold,
+	ItalicFont=Palatino ET W02 Italic,
+	BoldItalicFont=PalatinoETW02-BoldItali,
+	Scale=0.8]
+\setmonofont{Courier Prime}[Scale=0.9]
+
+% keep page and line numbers from being selected just in awful case
+\renewcommand{\thelstnumber}{\protect\BeginAccSupp{ActualText={}}%
+	\arabic{lstnumber}%
+\protect\EndAccSupp{}}
+
+\renewcommand{\thepage}{\protect\BeginAccSupp{ActualText={}}%
+	\arabic{page}%
+\protect\EndAccSupp{}}
+
+% for our beautiful schematic
+\usetikzlibrary{
+	arrows,
+	backgrounds,
+	calc,
+	fit,
+	matrix,
+	patterns,
+	plotmarks,
+	shadows,
+	shapes,
+	snakes
+}
+
+\definecolor{Green}{HTML}{006600}
+\definecolor{Blue}{HTML}{2d2f92}
+\definecolor{Purple}{HTML}{99479b}
+\definecolor{Orange}{HTML}{f58137}
+\definecolor{Red}{HTML}{ed1b23}
+\lstset{
+	language=AVR,
+	basicstyle=\small\ttfamily,
+	keywordstyle=\color{Blue}\bfseries,
+	keywordstyle=[2]\color{Orange},
+	keywordstyle=[3]\color{Purple},
+	keywordstyle=[4]\color{Red},
+	commentstyle=\small\itshape\color{Green},
+	tabsize=8,
+	numbers=left,
+	numberstyle=\small\ttfamily\color{Blue}
+}
+
+\title{ECE:3360 -- Lab 3 Report}
+\author{Oliver Emery and Austin Wittenburg}
+\date{9 March 2022}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+The goal of this lab is to get more experience with timers, single-wire 
+communication, and rotary pulse generators. We will do this by building a 
+thermostat using seven-segment displays, a DHT11 sensor, a rotary pulse 
+generator, and a push button switch with a software debounce. The thermostat 
+should have two modes. The first mode should allow the user to use the RPG to 
+set the desired temperature on the thermostat. The user should know that they 
+are in this mode because both of the decimal points on the seven-segment 
+displays will be on. When the user pushes the button, the mode should change to 
+displaying the actual temperature. Also if the actual temperature is lower than 
+the desired temperature, then the yellow LED ``L'' on the Arduino board 
+should be turned on, indicating that there is some sort of heating element 
+being activated.
+
+\section{Schematic}
+Figure 1 shows our circuit design as it was implemented. All resistor values are
+\SI{1}{\kilo\ohm}, with the exception of the resistor between the ATmega328P and
+the DHT11, which is \SI{330}{\ohm}. The circuit is running on \SI{5}{V}.
+
+\begin{figure}[H]
+	\centering
+	\input{schematic.tikz}
+	\caption{schematic as implemented}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{breadboard.jpg}
+	\caption{physical implementation}
+\end{figure}
+
+\section{Discussion}
+The software debounce we used in this lab is similar to the debounce method we 
+used in lab 2, but we essentially just treated the RPG as two buttons when we 
+were debouncing it. In fact a lot of our setup was carried over from lab 2 
+including the placement and wiring of the shift register and seven-segment 
+display. Using the serial connection to communicate with the DHT11 was trickier 
+than expected. We ran into a lot of problems with timing the signal to be able 
+to read it reliably every time.
+
+\subsection*{Timer Usage}
+We used one 8-bit timer for all time-based operations. For the majority of each
+second during which the DHT11 is not being read, we have the timer configured in
+clear timer on compare match mode. The compare register is set to target a \SI{250}{\micro\second}
+interval between compare match flags.
+\par\vspace*{2ex}
+While reading the DHT11, we use a /8 prescaler for \SI{0.5}{\micro\second} resolution,
+and compare-timer-on-match mode as well.
+
+\subsection*{Reading the DHT11}
+As an aid in designing the sensor data reading subroutine, we pulled a transaction sample
+from an oscilloscope and loaded it into PulseView, a frontend for \texttt{sigrok}. We wrote
+a protocol decoder for DHT11 messages to gain a better understanding of the signal format.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{sigrok-pulseview.png}
+	\caption{PulseView display with custom protocol decoder}
+\end{figure}
+Our timing algorithm is illustrated in Figure 4. We first synchronize to the positive clock
+edge of the current bit (1L, 2L), then delay for \SI{40}{\micro\second}. At this time, the
+subroutine reads the sensor data pin value (1C, 2C). If the pin is lo (1C), this indicates a
+0, and vice versa. Finally, we wait for the next positive clock edge.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{reading-dht11.png}
+	\caption{sensor read subroutine intervals}
+\end{figure}
+
+
+
+\section{Conclusion}
+This lab helped us better understand the serial communications through the 
+DHT11, and gave us much more experience with using timers. We were able to 
+implement the RPG very easily by treating it similar to just two buttons which 
+allowed us to reuse our previous methods for debouncing which were already very 
+effective.
+
+\newpage\appendix
+\section{Source Code Listing}
+\lstinputlisting{../main.S}
+
+\section{References}
+\begin{enumerate}
+	\item ``DHT11 Datasheet'' <https://www.mouser.com/datasheet/2/758/DHT11-Technical-Data-Sheet-Translated-Version-1143054.pdf>
+	\item ``SN74HC595 Datasheet'' <https://www.sparkfun.com/datasheets/IC/SN74HC595.pdf>
+	\item ``3461AS Datasheet'' <http://www.xlitx.com/datasheet/3461AS.pdf>
+\end{enumerate}
+\end{document}

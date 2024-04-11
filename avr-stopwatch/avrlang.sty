@@ -1,0 +1,24 @@
+%%
+%% AVRASM definition (c) 2005 Nils Michelsen
+%% Modified 2013 by Edward Shin
+%% Modified 2022 by Oliver Emery
+%%
+\lstdefinelanguage{AVR}{
+morekeywords=[1]{adc,add,adiw,sub,subi,sbc,sbiw,and,andi,or,ori,eor,com,
+                neg,sbr,cbr,inc,dec,tst,clr,ser,mul,muls,mulsu,fmul,fmuls,
+                fmulsu,rjmp,ijmp,eijmp,jmp,rcall,icall,eicall,call,ret,
+                reti,cpse,cp,cpc,cpi,sbrc,sbrs,sbic,sbis,brbs,brbc,breq,
+                brne,brcs,brcc,brsh,brlo,brmi,brpl,brge,brlt,brhs,brhc,
+                brts,brtc,brvs,brvc,brie,brid,mov,movw,ldi,lds,ld,ldd,st,
+                sts,std,lpm,elpm,spm,in,out,push,pop,lsl,lsr,rol,ror,asr,
+                swap,bset,bclr,sbi,cbi,bst,bld,sec,sen,cln,sez,clz,sei,cli,
+                ses,cls,sev,clv,set,clt,seh,clh,break,nop,sleep,wdr},%
+morekeywords=[2]{X,Y,Z,r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,
+                r15,r16,r17,r18,r19,r20,r21,r22,r23,r24,r25,r26,r27,r28,r29,
+                r30,r31,XL,XH,YL,YH,ZL,ZH},%
+morekeywords=[3]{org,def,equ,db,include,dseg,cseg,eseg,exit},%
+morekeywords=[4]{RAMEND,SPH,SPL,SREG,OCR0A,OCIE0A,TIMSK0,WGM01,TCCR0A,TCCR0B,
+                DDRB,PORTB,DDRD,PORTD,SE,SMCR,OC0Aaddr,INT_VECTORS_SIZE},%
+sensitive=f,%
+morecomment=[l];,%
+}[keywords,comments,strings]%

@@ -1,0 +1,18 @@
+#!/bin/bash -x
+
+feh -dF sample.png
+
+dd if=/dev/random of=keyfile bs=32 count=1
+
+convert sample.png sample.rgb
+
+serpent --encrypt=ECB --keyfile=keyfile < sample.rgb > sample.ecb.rgb
+serpent --encrypt=CBC --keyfile=keyfile < sample.rgb > sample.cbc.rgb
+
+convert -size "1024x1024" -depth 8 sample.ecb.rgb sample.ecb.png
+convert -size "1024x1024" -depth 8 sample.cbc.rgb sample.cbc.png
+
+rm *.rgb
+feh -dF sample.{ecb,cbc}.png sample.png
+
+exit 0
